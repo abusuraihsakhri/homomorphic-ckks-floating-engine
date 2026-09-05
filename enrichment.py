@@ -3,10 +3,8 @@ Enrichment Feature Implementation for homomorphic-ckks-floating-engine.
 Generated based on domain-specific requirements in specifications.
 """
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 import datetime
-import math
-import json
 
 # =============================================================================
 # 1. PERFORMANCE BENCHMARKING SUITE WITH OPERATION COUNTS AND TIMING
@@ -420,8 +418,8 @@ class HomomorphicckksfloatingengineEnrichmentSuite:
         self.fhebootstrappingperf = FheBootstrappingPerformanceProfilerEngine()
         self.formalsecurityproofd = FormalSecurityProofDocumentationIndcpaIndcpadEngine()
         self.nistcompliancecertif = NistComplianceCertificationChecklistWithTestVectorValidationEngine()
-        self.additionalenhancemen = AdditionalEnhancementSimdVectorEncodingOptimizerEngine()
-        self.additionalenhancemen = AdditionalEnhancementNoiseBudgetAnalyzerEngine()
+        self.simdoptimizer = AdditionalEnhancementSimdVectorEncodingOptimizerEngine()
+        self.noisebudgetanalyzer = AdditionalEnhancementNoiseBudgetAnalyzerEngine()
 
     def execute_all(self, primary_val: float = 1.5, secondary_val: float = 0.5) -> Dict[str, Any]:
         results = {}
@@ -431,8 +429,8 @@ class HomomorphicckksfloatingengineEnrichmentSuite:
         results["FheBootstrappingPerformanceProfilerEngine"] = self.fhebootstrappingperf.evaluate(primary_val, secondary_val)
         results["FormalSecurityProofDocumentationIndcpaIndcpadEngine"] = self.formalsecurityproofd.evaluate(primary_val, secondary_val)
         results["NistComplianceCertificationChecklistWithTestVectorValidationEngine"] = self.nistcompliancecertif.evaluate(primary_val, secondary_val)
-        results["AdditionalEnhancementSimdVectorEncodingOptimizerEngine"] = self.additionalenhancemen.evaluate(primary_val, secondary_val)
-        results["AdditionalEnhancementNoiseBudgetAnalyzerEngine"] = self.additionalenhancemen.evaluate(primary_val, secondary_val)
+        results["AdditionalEnhancementSimdVectorEncodingOptimizerEngine"] = self.simdoptimizer.evaluate(primary_val, secondary_val)
+        results["AdditionalEnhancementNoiseBudgetAnalyzerEngine"] = self.noisebudgetanalyzer.evaluate(primary_val, secondary_val)
         return results
 
 # Global instance
