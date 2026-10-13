@@ -9,13 +9,14 @@ import sys
 from pathlib import Path
 from agents.models import SystemTaskPayload
 from agents.supervisor import SystemSupervisor
-from agents.base import AuditLogger
+from agents.base import AuditLogger, SecurityException
+from pydantic import ValidationError
 
 supervisor = SystemSupervisor(model_provider="mock")
 
 
 def _resolve_safe_path(path_str: str, must_exist: bool = False) -> Path:
-    """Resolve a user-supplied path safely, preventing directory traversal."""
+    """Normalize a local path explicitly selected by the CLI caller."""
     path = Path(path_str).resolve()
     if must_exist and not path.exists():
         raise FileNotFoundError(f"Input file not found: {path_str}")
@@ -89,7 +90,7 @@ def main(argv=None):
         trail = AuditLogger.get_trail()
         valid = AuditLogger.verify_integrity()
         print(f"Audit Trail Blocks: {len(trail)} | Cryptographic Integrity Verified: {valid}")
-        return 0
+        return 0 if valid else 1
 
     if args.command == "batch":
         try:
@@ -108,24 +109,25 @@ def main(argv=None):
             return 1
 
         out_path = _resolve_safe_path(args.output, must_exist=False)
-        out_fields = fieldnames + ["overall_urgency", "integrity_status", "total_alerts", "audit_hash"]
+        if not fieldnames or not {"task_id", "target_identifier", "primary_metric"}.issubset(fieldnames):
+            print("Error: CSV must contain task_id, target_identifier, and primary_metric columns", file=sys.stderr)
+            return 1
+        out_fields = list(dict.fromkeys(fieldnames + ["overall_urgency", "integrity_status", "total_alerts", "audit_hash"]))
         out_rows = []
         for r in rows:
             try:
-                primary = float(r.get("primary_metric", 15.0))
-                secondary = float(r.get("secondary_metric", 5.0))
-            except (ValueError, TypeError) as e:
-                print(f"Warning: Skipping row with invalid metrics: {r.get('task_id', '?')} ({e})", file=sys.stderr)
+                payload = SystemTaskPayload(
+                    task_id=r.get("task_id") or "",
+                    target_identifier=r.get("target_identifier") or "",
+                    primary_metric=float(r.get("primary_metric", "")),
+                    secondary_metric=float(r.get("secondary_metric") or 0),
+                    status_descriptor=r.get("status_descriptor") or "NOMINAL",
+                    is_critical_flag=str(r.get("is_critical_flag", "")).lower() in ("true", "1", "yes"),
+                )
+                dossier = supervisor.process_task(payload)
+            except (ValueError, TypeError, ValidationError, SecurityException) as exc:
+                print(f"Warning: Skipping invalid row {r.get('task_id', '?')}: {exc}", file=sys.stderr)
                 continue
-            payload = SystemTaskPayload(
-                task_id=r.get("task_id", "TASK-01"),
-                target_identifier=r.get("target_identifier", "TARGET-01"),
-                primary_metric=primary,
-                secondary_metric=secondary,
-                status_descriptor=r.get("status_descriptor", "NOMINAL"),
-                is_critical_flag=str(r.get("is_critical_flag", "")).lower() in ("true", "1", "yes"),
-            )
-            dossier = supervisor.process_task(payload)
             row_dict = dict(r)
             row_dict["overall_urgency"] = dossier.overall_urgency.value
             row_dict["integrity_status"] = dossier.integrity_status.value
