@@ -118,3 +118,11 @@ def test_browser_javascript_syntax_when_node_available(tmp_path):
     script_path.write_text(script, encoding="utf-8")
     result = subprocess.run([node, "--check", str(script_path)], capture_output=True, text=True, check=False)
     assert result.returncode == 0, result.stderr
+
+
+def test_hmac_field_boundaries_are_unambiguous():
+    trail = AuditTrail(secret_key="test-only-key")
+    trail.log("alpha|beta", "gamma", "EVENT", {"ok": True})
+    trail.logs[0]["actor"] = "alpha"
+    trail.logs[0]["actor_tier"] = "beta|gamma"
+    assert not trail.verify_integrity()
