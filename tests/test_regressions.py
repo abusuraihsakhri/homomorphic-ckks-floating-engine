@@ -93,7 +93,7 @@ def test_batch_skips_nonfinite_metrics(tmp_path, capsys):
         "INVALID,K1,nan,5,NOMINAL\n"
         "VALID,K2,3,5,NOMINAL\n", encoding="utf-8")
     assert main(["batch", "-i", str(source), "-o", str(output)]) == 0
-    assert "Skipping invalid row" in capsys.readouterr().err
+    assert "Skipping row" in capsys.readouterr().err
     text = output.read_text(encoding="utf-8")
     assert "VALID" in text
     assert "INVALID,K1" not in text
