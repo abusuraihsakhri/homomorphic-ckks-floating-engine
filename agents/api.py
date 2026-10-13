@@ -1,11 +1,11 @@
 """FastAPI interface for the threshold-evaluation demonstration."""
 import hmac
 import os
-from pathlib import Path
+from importlib.resources import files
 from typing import Optional
 
 from fastapi import FastAPI, Header, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from .base import AuditLogger, SecurityException
@@ -17,7 +17,7 @@ supervisor = SystemSupervisor(model_provider="mock")
 app = FastAPI(
     title="CKKS-Named Threshold Evaluation Demo",
     description="Rule-based metric evaluation. Does not perform homomorphic encryption.",
-    version="3.0.1",
+    version="2.0.1",
 )
 
 
@@ -27,12 +27,12 @@ class ChatRequest(BaseModel):
 
 @app.get("/")
 def dashboard():
-    return FileResponse(Path(__file__).resolve().parent.parent / "web" / "index.html")
+    return HTMLResponse(files("web").joinpath("index.html").read_text(encoding="utf-8"))
 
 
 @app.get("/health")
 def health():
-    return {"status": "HEALTHY", "service": "homomorphic-ckks-floating-engine", "mode": "threshold-evaluation", "version": "3.0.1"}
+    return {"status": "HEALTHY", "service": "homomorphic-ckks-floating-engine", "mode": "threshold-evaluation", "version": "2.0.1"}
 
 
 @app.get("/metrics")
