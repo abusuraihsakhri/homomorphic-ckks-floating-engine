@@ -29,7 +29,10 @@ homomorphic-ckks-legacy = "ckks_fhe_engine.cli:main"
 py-modules = ["cli", "enrichment", "simulator", "ckks_fhe_engine_app"]
 
 [tool.setuptools.packages.find]
-include = ["agents*", "ckks_fhe_engine*"]
+include = ["agents*", "ckks_fhe_engine*", "web"]
+
+[tool.setuptools.package-data]
+web = ["index.html"]
 
 [project.urls]
 Homepage = "https://github.com/abusuraihsakhri/homomorphic-ckks-floating-engine"
