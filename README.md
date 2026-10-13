@@ -1,204 +1,74 @@
 # Homomorphic CKKS Floating Engine
 
-> **Domain:** Post-Quantum Cryptography & Zero-Knowledge Architecture
-> **Reference Guidelines & Standards:** `NIST FIPS 203/204/205, NIST SP 800-90B & ISO/IEC Standards`
+**Important:** This repository currently contains a **rule-based threshold evaluation demonstration**, not an implementation of CKKS homomorphic encryption. It does **not** encrypt vectors, perform ciphertext arithmetic, validate homomorphic encryption standards, establish HIPAA compliance, or issue cryptographic security certifications.
 
-<div align="center">
+## Features
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB.svg?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688.svg?logo=fastapi&logoColor=white)
-![Audit Trail](https://img.shields.io/badge/Audit-HMAC--SHA256_Tamper--Evident-brightgreen.svg)
-![Zero-PHI Guard](https://img.shields.io/badge/Guard-Zero--PHI_Outbound-blue.svg)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)
+- Three-worker Python evaluator: primary metrics (>25), secondary metrics (>12), critical flags, and anomaly keywords.
+- CLI single-task evaluation, CSV batch processing, mock chat, and audit-trail verification.
+- FastAPI server with /health, /metrics, /api/audit, /api/chat, and protected /api/audit/logs.
+- In-memory HMAC-SHA256 chained audit records with signature recomputation; records are **not persisted**.
+- A standalone, responsive browser interface at [web/index.html](web/index.html), with local JavaScript evaluation, opt-in API mode, and JSON export.
+- A legacy evaluation interface in ckks_fhe_engine/ and eight enrichment modules. Despite their names, these modules use numerical thresholds and do not execute CKKS operations, side-channel proofs, or compliance tests.
 
-</div>
+## Browser use
 
----
+Open [web/index.html](web/index.html) in a modern browser or use the GitHub Pages publication when enabled. Select **Local browser evaluation** and enter synthetic values. Local mode processes data entirely within the tab; choosing **Same-origin API** transmits it to your server. No Pyodide or server-side Python is required for the local browser mode.
 
-## 📖 What It Does
+The repository includes a GitHub Pages workflow to publish web/ from master. A live URL should only be advertised after its deployment is verified.
 
-**Homomorphic CKKS Floating Engine** is an analytical platform implementing a multi-agent evaluation engine with CKKS Fully Homomorphic Encryption (FHE) SIMD floating-point vector arithmetic capabilities. It processes task payloads through specialized worker agents that evaluate metrics against domain thresholds, enforce safety boundaries, and verify protocol conformance.
+## Install and run
 
-The system features a **Zero-PHI Outbound Interceptor** that blocks sensitive identifiers (SSNs, MRNs, phone numbers, patient names) from leaving the system, and a **Tamper-Evident HMAC-SHA256 Audit Trail** that cryptographically signs every evaluation and state transition.
+Requires Python 3.9 or newer.
 
----
+~~~bash
+python -m pip install -e ".[server,test]"
+python -m pytest -q
+homomorphic-ckks-floating-engine audit --task-id DEMO-001 --target SYNTHETIC-001 --primary 29.4 --secondary 14.8 --critical --status DISCORDANT
+homomorphic-ckks-floating-engine batch -i sample.csv -o results.csv
+homomorphic-ckks-floating-engine serve --host 127.0.0.1 --port 8000
+~~~
 
-## ⚙️ Key Capabilities & Algorithmic Modules
+Open http://127.0.0.1:8000/ for the form or http://127.0.0.1:8000/docs for the API documentation. The command **homomorphic-ckks-legacy** retains the earlier secondary CLI interface.
 
-- **Multi-Agent Evaluation Engine**: Three specialized workers (InvariantQC, SafetyEscalation, ProtocolConformance) evaluate task payloads in parallel
-- **Consensus Dossier Generation**: Aggregates worker alerts into a unified urgency assessment with cryptographic audit hash
-- **Zero-PHI Outbound Guard**: AST and regex inspection blocking SSNs, MRNs, phone numbers, emails, DOBs, and patient identifiers
-- **HMAC-SHA256 Audit Trail**: Chained, cryptographically signed logs with integrity verification
-- **FastAPI REST API**: OpenAPI 3.1 endpoints for task evaluation, chat, and audit log retrieval
-- **Prometheus Telemetry**: Operational metrics exporter for monitoring
-- **Enrichment Suite**: 8 domain-specific benchmarking and analysis engines (performance, side-channel resistance, interoperability, bootstrapping, security proofs, NIST compliance, SIMD optimization, noise budget)
+For a local container:
 
----
+~~~bash
+docker compose up --build
+~~~
 
-## 🚀 Installation
+Compose binds the service to loopback on port 8000. Public production exposure requires authentication, TLS, rate limits, monitoring, and persistent audit storage.
 
-```bash
-# Clone the repository
-git clone https://github.com/abusuraihsakhri/homomorphic-ckks-floating-engine.git
-cd homomorphic-ckks-floating-engine
+## API example
 
-# Install dependencies
-pip install fastapi uvicorn pydantic pytest
+~~~bash
+curl -s http://127.0.0.1:8000/api/audit \
+  -H 'Content-Type: application/json' \
+  -d '{"task_id":"DEMO-001","target_identifier":"SYNTHETIC-001","primary_metric":29.4,"secondary_metric":14.8,"status_descriptor":"DISCORDANT","is_critical_flag":true}'
+~~~
 
-# (Optional) Set audit key for persistent audit integrity
-export AUDIT_SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))")
-```
+GET /api/audit/logs is disabled unless the server has the **AUDIT_API_TOKEN** environment variable set. Authorized clients supply the key in the **X-Audit-Token** header. **AUDIT_SECRET_KEY** configures the signing key; if unset, an ephemeral key is generated. The ledger itself is in memory and is lost on restart even with a persistent key.
 
----
+## Privacy, security and limitations
 
-## 💻 CLI Quickstart & Usage
+**Use synthetic or appropriately de-identified inputs only.** Sensitive-identifier detection is regex-based, incomplete, and not a substitute for validated de-identification or formal privacy safeguards. Audit and chat input paths are not protected by a general authentication middleware. Never expose the default API publicly or send actual patient identifiers.
 
-### 1. Single Task Evaluation (Audit)
-```bash
-python cli.py audit --task-id TASK-001 --target KEY-01 --primary 28.5 --secondary 14.2 --critical --status DISCORDANT
-```
+The HMAC chain can detect alterations to signed fields while the secret key is uncompromised, but it is not immutable or persistent storage. An operator with signing-key access can rewrite the entire chain. The audit records contain a hash of selected details, not a complete original payload.
 
-### 2. Supervisory Chat
-```bash
-python cli.py chat "What standard is applied?"
-```
+The mock chat adapter does not perform real LLM inference; the threshold rules are demonstration constants with no cryptographic, clinical or regulatory significance. The enrichment modules are illustrative numeric checks, not actual interoperability tests or security validations.
 
-### 3. Batch CSV Processing
-```bash
-python cli.py batch -i sample.csv -o results.csv
-```
+## Development
 
-### 4. Verify Audit Trail Integrity
-```bash
-python cli.py verify-audit
-```
+~~~bash
+python -m pip install -e ".[server,test]"
+python -m pip check
+python -m pytest -q
+python -m pip install build
+python -m build
+~~~
 
-### 5. Launch REST API Server
-```bash
-python cli.py serve --host 127.0.0.1 --port 8000
-```
+GitHub Actions tests Python 3.9–3.12, builds a package, and exercises both console entry points. The static browser view has no third-party JavaScript dependencies, browser storage, or mandatory server connection.
 
-### 6. Run Simulation Benchmark
-```bash
-python simulator.py 1000
-```
+## License
 
-### Parameter Reference
-- `--task-id`: Unique task/case identifier
-- `--target`: Entity, patient key, or genomic/cryptographic target
-- `--primary`: Primary domain measurement or score (float)
-- `--secondary`: Secondary kinetic or confidence score (float)
-- `--critical`: Emergency escalation or high priority trigger (flag)
-- `--status`: Status code or phenotype descriptor (e.g., NOMINAL, DISCORDANT_ANOMALY)
-
-### Input Data Schema
-
-| Field | Description | Requirement |
-|:------|:------------|:------------|
-| `task_id` | Unique task/case identifier | Required |
-| `target_identifier` | Entity or target key | Required |
-| `primary_metric` | Primary measurement or score | Required |
-| `secondary_metric` | Secondary kinetic/confidence score | Optional (default: 0.0) |
-| `is_critical_flag` | Emergency escalation trigger | Optional (default: False) |
-| `status_descriptor` | Status code or phenotype | Optional (default: NOMINAL) |
-
----
-
-## 🛡️ Security & Enterprise Architecture
-
-* **Zero-PHI Outbound Interceptor:** Active regex inspection blocking SSNs, MRNs, phone numbers, emails, DOBs, and patient identifiers.
-* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition. Uses a cryptographically secure random key if `AUDIT_SECRET_KEY` is not set.
-* **Air-Gapped LLM Reasoning Adapter:** Agnostic integration for local Ollama instances (`llama3`, `mistral`), Claude 3.5 Sonnet, GPT-4o, and deterministic test mocks.
-* **Active Learning Bayesian Calibration:** Dynamic tracker updating worker reliability weights and monitoring Brier calibration drift.
-* **FastAPI & Prometheus Telemetry:** Exposes OpenAPI 3.1 REST endpoints and operational Prometheus metrics (`/metrics`).
-
----
-
-## 🧪 Testing & Verification
-
-Run the full automated test suite:
-
-```bash
-pytest -v
-```
-
-Execute high-throughput batch simulation benchmarks:
-
-```bash
-python simulator.py 1000
-```
-
-### Test Coverage
-- **PHI Guard Enforcement**: Validates that sensitive identifiers are blocked
-- **Worker Evaluation**: Tests each specialized worker's threshold logic
-- **Supervisor Consensus**: Verifies multi-agent dossier generation and audit integrity
-- **Audit Trail Security**: Confirms secure key generation and chain integrity
-- **Enrichment Suite**: Validates all 8 domain engines produce distinct results
-- **CLI Batch Validation**: Tests error handling for missing files and invalid data
-- **Simulator Resilience**: Verifies graceful handling of edge cases
-
----
-
-## 🐳 Container Deployment
-
-### Docker Compose (Recommended)
-```bash
-# Copy environment template and configure
-cp .env.example .env
-# Edit .env to set AUDIT_SECRET_KEY
-
-# Build and run
-docker-compose up -d
-```
-
-### Docker Direct
-```bash
-docker build -t homomorphic-ckks-floating-engine .
-docker run -p 8000:8000 -e AUDIT_SECRET_KEY=your-secret-key homomorphic-ckks-floating-engine
-```
-
----
-
-## 📁 Project Structure
-
-```
-homomorphic-ckks-floating-engine/
-├── agents/                     # Core agent framework
-│   ├── __init__.py            # Package metadata
-│   ├── api.py                 # FastAPI REST endpoints
-│   ├── base.py                # Security, PHI guard, audit trail
-│   ├── models.py              # Pydantic schemas
-│   ├── supervisor.py          # Multi-agent orchestrator
-│   ├── workers.py             # Specialized evaluation workers
-│   ├── llm_factory.py         # LLM provider factory
-│   ├── learning.py            # Bayesian calibration engine
-│   ├── metrics.py             # Prometheus metrics collector
-│   └── streamer.py            # WebSocket telemetry broadcaster
-├── ckks_fhe_engine/           # CKKS FHE engine module
-│   ├── __init__.py
-│   ├── agents.py              # Sub-agent implementations
-│   ├── cli.py                 # CLI entry point
-│   ├── engine.py              # Core algorithmic engine
-│   ├── models.py              # Data models
-│   └── server.py              # FastAPI server factory
-├── tests/                     # Test suite
-│   ├── test_ckks_fhe_engine.py
-│   ├── test_enrichment.py
-│   ├── test_homomorphic_ckks_floating_engine.py
-│   └── test_security_and_reliability.py
-├── web/index.html             # Operations console UI
-├── cli.py                     # Main CLI entry point
-├── simulator.py               # Stress testing simulator
-├── enrichment.py              # Domain-specific enrichment engines
-├── Dockerfile
-├── docker-compose.yml
-├── pyproject.toml
-└── README.md
-```
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+[MIT](LICENSE).
