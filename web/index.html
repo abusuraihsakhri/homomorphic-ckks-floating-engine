@@ -1,236 +1,188 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Homomorphic Ckks Floating Engine — Operations Console</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #090d16;
-            --card: #111827;
-            --border: #1f293d;
-            --accent: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.25);
-            --text: #f3f4f6;
-            --text-muted: #9ca3af;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --success: #10b981;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            padding: 2rem;
-            min-height: 100vh;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .header-title h1 { font-size: 1.6rem; font-weight: 700; color: #fff; }
-        .header-title p { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem; }
-        .badge {
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            background: var(--accent-glow);
-            color: var(--accent);
-            border: 1px solid var(--accent);
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 1.5rem;
-        }
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-        .card h2 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; }
-        input, select, textarea {
-            width: 100%;
-            padding: 0.65rem 0.9rem;
-            background: #0d1322;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: #fff;
-            font-family: inherit;
-            font-size: 0.9rem;
-        }
-        input:focus, textarea:focus { outline: none; border-color: var(--accent); }
-        .btn {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            padding: 0.7rem 1.4rem;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            width: 100%;
-        }
-        .btn:hover { background: #2563eb; }
-        .terminal {
-            background: #060911;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: #10b981;
-            height: 380px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-        }
-        .metrics-bar {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .metric-box {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-        }
-        .metric-val { font-size: 1.4rem; font-weight: 700; color: #fff; margin-top: 0.25rem; }
-        .metric-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Threshold Evaluation Demo — Homomorphic CKKS Floating Engine</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui,-apple-system,Segoe UI,sans-serif; background:#0b1020; color:#e8edf7; }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:clamp(1rem,3vw,2rem); }
+    main { max-width:1120px; margin:auto; }
+    header { display:flex; flex-wrap:wrap; gap:1rem; align-items:center; justify-content:space-between; border-bottom:1px solid #34415b; padding-bottom:1.1rem; }
+    h1 { font-size:clamp(1.4rem,2.6vw,1.95rem); letter-spacing:-.025em; margin:.2rem 0; }
+    .eyebrow { text-transform:uppercase; letter-spacing:.12em; font-size:.75rem; color:#8fbaff; font-weight:700; }
+    .subtext { color:#b8c5db; line-height:1.5; max-width:74ch; }
+    .notice { margin:1.3rem 0; padding:1rem; border:1px solid #5a496c; border-radius:9px; background:#211b31; line-height:1.55; }
+    .layout { display:grid; grid-template-columns:minmax(280px, .95fr) minmax(300px, 1.05fr); gap:1rem; margin-top:1.2rem; }
+    .panel { background:#121b2e; border:1px solid #34415b; border-radius:12px; padding:clamp(1rem,2.2vw,1.4rem); min-width:0; }
+    h2 { font-size:1.1rem; margin:0 0 1rem; }
+    label { display:block; font-size:.86rem; font-weight:650; margin:.7rem 0 .33rem; }
+    input,select { font:inherit; background:#0a1426; color:#f4f7ff; border:1px solid #63728e; border-radius:7px; padding:.68rem .8rem; width:100%; }
+    input:focus-visible,select:focus-visible,button:focus-visible { outline:3px solid #7eb5ff; outline-offset:2px; }
+    .two { display:grid; grid-template-columns:1fr 1fr; gap:.85rem; }
+    .checkline { display:flex; gap:.6rem; align-items:center; padding:.5rem 0; }
+    .checkline input { width:auto; accent-color:#6aa9ff; }
+    .checkline label { margin:0; }
+    button { padding:.73rem 1rem; background:#4b91f7; color:#081324; border:0; border-radius:7px; font:inherit; font-weight:700; cursor:pointer; }
+    button:hover { background:#83b7ff; }
+    button:disabled { opacity:.45; cursor:not-allowed; }
+    button.secondary { background:#273c57; color:#eef4ff; }
+    .actions { display:flex; gap:.6rem; flex-wrap:wrap; margin-top:1rem; }
+    .actions button { flex:1 1 155px; }
+    .muted { color:#b8c5db; font-size:.87rem; line-height:1.5; }
+    .result-banner { background:#1d2e46; border-radius:8px; padding:.8rem; font-weight:700; margin-bottom:.9rem; }
+    pre { white-space:pre-wrap; overflow-wrap:anywhere; background:#081122; padding:1rem; border-radius:8px; border:1px solid #273c57; min-height:230px; line-height:1.48; color:#d7eaff; font-size:.83rem; }
+    footer { color:#b8c5db; margin-top:1.2rem; font-size:.85rem; }
+    a { color:#9bccff; }
+    @media(max-width:750px) { .layout { grid-template-columns:1fr; } }
+    @media(max-width:420px) { .two { grid-template-columns:1fr; } }
+  </style>
 </head>
 <body>
-
-    <div class="header">
-        <div class="header-title">
-            <h1>Homomorphic Ckks Floating Engine</h1>
-            <p>Domain: Clinical & Cryptographic AI | Standard: CAP / CLSI / NIST Standards | LabMind-Atlas Architecture</p>
-        </div>
-        <div>
-            <span class="badge">Air-Gapped Active</span>
-            <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border-color: #10b981;">Zero-PHI Guard Active</span>
-        </div>
+<main>
+  <header>
+    <div>
+      <div class="eyebrow">Browser-compatible demonstration</div>
+      <h1>Homomorphic CKKS Floating Engine</h1>
+      <p class="subtext">Rule-based metric evaluation and status classification</p>
     </div>
-
-    <div class="metrics-bar">
-        <div class="metric-box">
-            <div class="metric-label">System Status</div>
-            <div class="metric-val" style="color: var(--success);" id="m-status">OPTIMAL</div>
+    <span class="eyebrow">No encryption performed</span>
+  </header>
+  <p class="notice"><strong>Scope:</strong> Despite the repository name, this interface does not implement CKKS, encrypt data, verify standards compliance, or produce a cryptographic audit record. Use synthetic inputs only. In local mode, processing occurs entirely in this browser tab; API mode transmits inputs to the configured same-origin server.</p>
+  <div class="layout">
+    <section class="panel" aria-labelledby="form-title">
+      <h2 id="form-title">Evaluate a task</h2>
+      <form id="audit-form">
+        <label for="mode">Execution mode</label>
+        <select id="mode">
+          <option value="local">Local browser evaluation</option>
+          <option value="api">Same-origin API (/api/audit)</option>
+        </select>
+        <div class="two">
+          <div><label for="task_id">Task ID</label><input id="task_id" name="task_id" value="DEMO-001" maxlength="128" required></div>
+          <div><label for="target_id">Target identifier</label><input id="target_id" name="target_id" value="SYNTHETIC-001" maxlength="128" required></div>
         </div>
-        <div class="metric-box">
-            <div class="metric-label">Tasks Processed</div>
-            <div class="metric-val" id="m-tasks">142</div>
+        <div class="two">
+          <div><label for="primary">Primary metric</label><input type="number" id="primary" name="primary" value="29.4" step="any" required></div>
+          <div><label for="secondary">Secondary metric</label><input type="number" id="secondary" name="secondary" value="14.8" step="any" required></div>
         </div>
-        <div class="metric-box">
-            <div class="metric-label">Audit Blocks Signed</div>
-            <div class="metric-val" id="m-audit">142</div>
+        <label for="descriptor">Status descriptor</label>
+        <input id="descriptor" name="descriptor" value="DISCORDANT_ANOMALY" maxlength="2048" required>
+        <div class="checkline">
+          <input type="checkbox" id="critical" name="critical" checked>
+          <label for="critical">Critical flag</label>
         </div>
-        <div class="metric-box">
-            <div class="metric-label">PHI Interceptions</div>
-            <div class="metric-val" style="color: var(--accent);" id="m-phi">0</div>
-        </div>
-    </div>
+        <p class="muted">Threshold rules: primary metric &gt;25, secondary metric &gt;12, critical flag, or selected anomaly keywords. Thresholds are arbitrary demonstration values, not CKKS security parameters.</p>
+        <div class="actions"><button type="submit" id="run">Evaluate</button><button type="reset" class="secondary">Reset</button></div>
+      </form>
+    </section>
+    <section class="panel" aria-labelledby="result-title">
+      <h2 id="result-title">Evaluation result</h2>
+      <div class="result-banner" id="summary" role="status">No evaluation submitted</div>
+      <pre id="output" aria-live="polite">Submit the form to view a structured result.</pre>
+      <div class="actions"><button class="secondary" type="button" id="download" disabled>Export JSON</button></div>
+      <p class="muted">Local results are deterministic and are not signed. API results are returned by the server; the displayed hash is not proof of encryption.</p>
+    </section>
+  </div>
+  <footer>Open-source research demonstration · <a href="https://github.com/abusuraihsakhri/homomorphic-ckks-floating-engine">Repository and documentation</a></footer>
+</main>
+<script>
+"use strict";
+const form = document.getElementById("audit-form");
+const output = document.getElementById("output");
+const summary = document.getElementById("summary");
+const download = document.getElementById("download");
+let latestResult = null;
 
-    <div class="grid">
-        <div class="card">
-            <h2>⚙️ Dispatch Distributed Component Audit</h2>
-            <div class="form-group">
-                <label>Task / Sample ID</label>
-                <input type="text" id="task_id" value="TASK-2026-LIVE-01">
-            </div>
-            <div class="form-group">
-                <label>Target Identifier</label>
-                <input type="text" id="target_id" value="SPECIMEN-ALPHA-77">
-            </div>
-            <div class="form-group">
-                <label>Primary Measurement / Value</label>
-                <input type="number" id="primary_metric" value="29.4" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Secondary Metric / Kinetic Index</label>
-                <input type="number" id="secondary_metric" value="14.8" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Status / Phenotype Descriptor</label>
-                <input type="text" id="status_descriptor" value="DISCORDANT_ANOMALY">
-            </div>
-            <div class="form-group">
-                <label><input type="checkbox" id="is_critical" checked> Trigger Emergency / Critical Flag</label>
-            </div>
-            <button class="btn" onclick="runAudit()">Execute Distributed Component Audit</button>
-        </div>
-
-        <div class="card">
-            <h2>📊 Real-Time Consensus Dossier & Audit Log</h2>
-            <div class="terminal" id="outputConsole">// Homomorphic Ckks Floating Engine Operations Console Ready
-// Connection established with Air-Gapped Supervisor
-// Cryptographic HMAC-SHA256 audit ledger loaded.
-// Ready for live task payload dispatch...</div>
-        </div>
-    </div>
-
-    <script>
-        async function runAudit() {
-            const consoleEl = document.getElementById('outputConsole');
-            consoleEl.innerText = "// Dispatching task across specialized workers...
-// Invoking InvariantQCWorker, SafetyEscalationWorker, ProtocolWorker...";
-
-            const payload = {
-                task_id: document.getElementById('task_id').value,
-                target_identifier: document.getElementById('target_id').value,
-                primary_metric: parseFloat(document.getElementById('primary_metric').value),
-                secondary_metric: parseFloat(document.getElementById('secondary_metric').value),
-                status_descriptor: document.getElementById('status_descriptor').value,
-                is_critical_flag: document.getElementById('is_critical').checked
-            };
-
-            try {
-                const res = await fetch('/api/audit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                consoleEl.innerText = JSON.stringify(data, null, 2);
-                document.getElementById('m-tasks').innerText = parseInt(document.getElementById('m-tasks').innerText) + 1;
-                document.getElementById('m-audit').innerText = parseInt(document.getElementById('m-audit').innerText) + 1;
-            } catch (err) {
-                consoleEl.innerText = "// Offline / Simulation Output:\n" + JSON.stringify({
-                    dossier_id: "DOSSIER-SIM-" + Math.floor(Math.random()*10000),
-                    system: "homomorphic-ckks-floating-engine",
-                    domain: "Clinical & Cryptographic AI",
-                    task_id: payload.task_id,
-                    overall_urgency: payload.is_critical_flag ? "CRITICAL_STAT_PANIC" : "ELEVATED_RISK",
-                    integrity_status: "DISCORDANT_ANOMALY",
-                    alerts: [
-                        { worker: "InvariantQCWorker", alert: "Primary metric exceeds upper reference bound" },
-                        { worker: "SafetyEscalationWorker", alert: "Critical emergency interlock flag active" }
-                    ],
-                    audit_hash: "HMAC_SHA256_e83f9a72b941d6c381f9"
-                }, null, 2);
-            }
-        }
-    </script>
+function evaluateLocally(payload) {
+  const alerts = [];
+  if (payload.primary_metric > 25) {
+    alerts.push({origin_worker:"InvariantQCWorker",urgency:"ELEVATED_RISK",summary:"Primary metric exceeded the demonstration threshold (25)."});
+  }
+  if (payload.secondary_metric > 12 || payload.is_critical_flag) {
+    alerts.push({origin_worker:"SafetyEscalationWorker",urgency:payload.is_critical_flag ? "CRITICAL_STAT_PANIC" : "ELEVATED_RISK",summary:"Secondary threshold or critical flag triggered."});
+  }
+  if (["DISCORDANT","ANOMALY","MUTANT","VIOLATION","FAIL","REJECT"].some(word => payload.status_descriptor.toUpperCase().includes(word))) {
+    alerts.push({origin_worker:"ProtocolConformanceWorker",urgency:"ELEVATED_RISK",summary:"Descriptor matched an anomaly keyword."});
+  }
+  const critical = alerts.some(a=>a.urgency==="CRITICAL_STAT_PANIC");
+  const elevated = alerts.length > 0;
+  return {
+    mode:"local-rule-evaluation",
+    task_id:payload.task_id,
+    target_identifier:payload.target_identifier,
+    overall_urgency:critical ? "CRITICAL_STAT_PANIC" : elevated ? "ELEVATED_RISK" : "ROUTINE",
+    integrity_status:critical ? "RECALIBRATION_REQUIRED" : elevated ? "DISCORDANT_ANOMALY" : "VALIDATED_OPTIMAL",
+    total_alerts:alerts.length,
+    alerts,
+    disclaimer:"This is a rule-based simulation. No cryptographic operations, compliance verification, or audit signatures were performed."
+  };
+}
+function setResult(result) {
+  latestResult = result;
+  output.textContent = JSON.stringify(result, null, 2);
+  summary.textContent = String(result.overall_urgency || "Evaluation completed") + " · " + String(result.total_alerts ?? 0) + " alert(s)";
+  download.disabled = false;
+}
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!form.reportValidity()) return;
+  const payload = {
+    task_id:document.getElementById("task_id").value.trim(),
+    target_identifier:document.getElementById("target_id").value.trim(),
+    primary_metric:Number(document.getElementById("primary").value),
+    secondary_metric:Number(document.getElementById("secondary").value),
+    status_descriptor:document.getElementById("descriptor").value.trim(),
+    is_critical_flag:document.getElementById("critical").checked
+  };
+  if (!payload.task_id || !payload.target_identifier || !payload.status_descriptor || !Number.isFinite(payload.primary_metric) || !Number.isFinite(payload.secondary_metric)) {
+    summary.textContent = "Invalid input";
+    output.textContent = "Enter nonempty identifiers and finite numerical metrics.";
+    return;
+  }
+  const run = document.getElementById("run");
+  run.disabled = true;
+  download.disabled = true;
+  latestResult = null;
+  summary.textContent = "Evaluating...";
+  try {
+    if (document.getElementById("mode").value === "local") {
+      setResult(evaluateLocally(payload));
+    } else {
+      const response = await fetch("/api/audit", {
+        method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error("API error " + response.status + ": " + JSON.stringify(data.detail ?? data));
+      setResult(data);
+    }
+  } catch (error) {
+    summary.textContent = "Evaluation failed";
+    output.textContent = error instanceof Error ? error.message : "Unexpected error";
+  } finally {
+    run.disabled = false;
+  }
+});
+form.addEventListener("reset", () => {
+  latestResult = null;
+  download.disabled = true;
+  summary.textContent = "No evaluation submitted";
+  output.textContent = "Submit the form to view a structured result.";
+});
+download.addEventListener("click", () => {
+  if (!latestResult) return;
+  const blob = new Blob([JSON.stringify(latestResult, null, 2) + "\n"],{type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "threshold-evaluation.json";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+</script>
 </body>
 </html>

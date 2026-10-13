@@ -2,6 +2,7 @@
 Supervisor Orchestrator & Operations Intelligence for Homomorphic Ckks Floating Engine.
 Domain: Post-Quantum Cryptography & Hardware Security
 """
+import json
 import uuid
 from typing import Dict, Any, List, Optional
 from .base import AuditLogger, ActionExecutor, PHIGuard
@@ -25,6 +26,8 @@ class SystemSupervisor:
         PHIGuard.assert_no_phi(payload.task_id)
         PHIGuard.assert_no_phi(payload.target_identifier)
         PHIGuard.assert_no_phi(payload.status_descriptor)
+        PHIGuard.assert_no_phi(json.dumps(payload.attributes, ensure_ascii=False, sort_keys=True))
+        PHIGuard.assert_no_phi(actor)
 
         # Multi-worker evaluations
         all_alerts: List[AgentAlert] = []

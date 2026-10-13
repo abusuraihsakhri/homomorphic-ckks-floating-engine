@@ -1,19 +1,23 @@
-"""
-FastAPI REST API Server for Homomorphic Ckks Floating Engine.
-"""
-from typing import Dict, Any, List
-from fastapi import FastAPI, HTTPException
+"""FastAPI interface for the threshold-evaluation demonstration."""
+import hmac
+import os
+from importlib.resources import files
+from typing import Optional
+
+from fastapi import FastAPI, Header, HTTPException
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-from .base import AuditLogger, PHIGuard
-from .models import SystemTaskPayload, ConsensusDossier
+
+from .base import AuditLogger, SecurityException
+from .models import SystemTaskPayload
 from .supervisor import SystemSupervisor
 
 supervisor = SystemSupervisor(model_provider="mock")
 
 app = FastAPI(
-    title="Homomorphic Ckks Floating Engine API",
-    description="Enterprise Distributed Component Platform (Post-Quantum Cryptography & Hardware Security)",
-    version="3.0.0-ENTERPRISE",
+    title="CKKS-Named Threshold Evaluation Demo",
+    description="Rule-based metric evaluation. Does not perform homomorphic encryption.",
+    version="2.0.1",
 )
 
 
@@ -21,9 +25,14 @@ class ChatRequest(BaseModel):
     query: str
 
 
+@app.get("/")
+def dashboard():
+    return HTMLResponse(files("web").joinpath("index.html").read_text(encoding="utf-8"))
+
+
 @app.get("/health")
 def health():
-    return {"status": "HEALTHY", "service": "homomorphic-ckks-floating-engine", "domain": "Post-Quantum Cryptography & Hardware Security", "standard": "NIST FIPS 203/204/205 / ISO/IEC 17825 Standards", "version": "3.0.0-ENTERPRISE"}
+    return {"status": "HEALTHY", "service": "homomorphic-ckks-floating-engine", "mode": "threshold-evaluation", "version": "2.0.1"}
 
 
 @app.get("/metrics")
@@ -31,25 +40,32 @@ def metrics():
     return {
         "dossiers_processed_total": len(supervisor.dossier_registry),
         "audit_blocks_total": len(AuditLogger.get_trail()),
-        "system_status": "NOMINAL_OPTIMAL"
+        "audit_integrity_valid": AuditLogger.verify_integrity(),
     }
 
 
 @app.post("/api/audit")
 def api_audit(payload: SystemTaskPayload):
-    dossier = supervisor.process_task(payload)
-    return dossier.to_dict()
+    try:
+        return supervisor.process_task(payload).to_dict()
+    except SecurityException as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @app.post("/api/chat")
 def api_chat(req: ChatRequest):
     try:
-        ans = supervisor.query_supervisory_chat(req.query)
-        return {"response": ans}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        return {"response": supervisor.query_supervisory_chat(req.query)}
+    except SecurityException as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @app.get("/api/audit/logs")
-def api_audit_logs():
+def api_audit_logs(x_audit_token: Optional[str] = Header(default=None)):
+    """Restrict detailed ledger access; no unauthenticated default."""
+    configured = os.getenv("AUDIT_API_TOKEN")
+    if not configured:
+        raise HTTPException(status_code=503, detail="Audit log endpoint is disabled")
+    if not x_audit_token or not hmac.compare_digest(x_audit_token, configured):
+        raise HTTPException(status_code=403, detail="Forbidden")
     return {"audit_trail": AuditLogger.get_trail(), "verified": AuditLogger.verify_integrity()}
