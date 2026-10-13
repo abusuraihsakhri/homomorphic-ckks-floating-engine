@@ -109,13 +109,15 @@ def main(argv=None):
             return 1
 
         out_path = _resolve_safe_path(args.output, must_exist=False)
-        if not fieldnames or not {"task_id", "target_identifier", "primary_metric"}.issubset(fieldnames):
+        if not fieldnames or len(fieldnames) != len(set(fieldnames)) or not {"task_id", "target_identifier", "primary_metric"}.issubset(fieldnames):
             print("Error: CSV must contain task_id, target_identifier, and primary_metric columns", file=sys.stderr)
             return 1
         out_fields = list(dict.fromkeys(fieldnames + ["overall_urgency", "integrity_status", "total_alerts", "audit_hash"]))
         out_rows = []
-        for r in rows:
+        for row_number, r in enumerate(rows, start=2):
             try:
+                if None in r:
+                    raise ValueError("Unexpected extra CSV columns")
                 payload = SystemTaskPayload(
                     task_id=r.get("task_id") or "",
                     target_identifier=r.get("target_identifier") or "",
@@ -125,8 +127,8 @@ def main(argv=None):
                     is_critical_flag=str(r.get("is_critical_flag", "")).lower() in ("true", "1", "yes"),
                 )
                 dossier = supervisor.process_task(payload)
-            except (ValueError, TypeError, ValidationError, SecurityException) as exc:
-                print(f"Warning: Skipping invalid row {r.get('task_id', '?')}: {exc}", file=sys.stderr)
+            except (ValueError, TypeError, ValidationError, SecurityException):
+                print(f"Warning: Skipping row {row_number} (invalid input)", file=sys.stderr)
                 continue
             row_dict = dict(r)
             row_dict["overall_urgency"] = dossier.overall_urgency.value
