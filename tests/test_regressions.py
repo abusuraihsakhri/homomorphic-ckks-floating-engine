@@ -97,3 +97,24 @@ def test_batch_skips_nonfinite_metrics(tmp_path, capsys):
     text = output.read_text(encoding="utf-8")
     assert "VALID" in text
     assert "INVALID,K1" not in text
+
+
+def test_packaged_dashboard_route():
+    client = TestClient(app)
+    result = client.get("/")
+    assert result.status_code == 200
+    assert "Local browser evaluation" in result.text
+
+
+def test_browser_javascript_syntax_when_node_available(tmp_path):
+    import shutil
+    import subprocess
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("Node.js is not available")
+    html = Path(__file__).resolve().parent.parent.joinpath("web", "index.html").read_text(encoding="utf-8")
+    script = html.split("<script>", 1)[1].split("</script>", 1)[0]
+    script_path = tmp_path / "dashboard.js"
+    script_path.write_text(script, encoding="utf-8")
+    result = subprocess.run([node, "--check", str(script_path)], capture_output=True, text=True, check=False)
+    assert result.returncode == 0, result.stderr
